@@ -1,0 +1,60 @@
+node_modules/*
+/dist/*
+# compiled output
+/node-refactor/dist
+/node-refactor/node_modules
+/node-refactor/build
+
+# Logs
+logs
+*.log
+/node-refactor/npm-debug.log*
+/node-refactor/pnpm-debug.log*
+/node-refactor/yarn-debug.log*
+/node-refactor/yarn-error.log*
+/node-refactor/lerna-debug.log*
+
+# OS
+.DS_Store
+
+# Tests
+/node-refactor/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# dotenv environment variable files
+/node-refactor/.env
+/node-refactor/.env.development.local
+/node-refactor/.env.test.local
+/node-refactor/.env.production.local
+/node-refactor/.env.local
+
+# temp directory
+/node-refactor/.temp
+/node-refactor/.tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+docker-data

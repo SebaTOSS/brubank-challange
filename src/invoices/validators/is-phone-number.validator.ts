@@ -4,6 +4,7 @@ import { ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments 
 export class IsPhoneNumber implements ValidatorConstraintInterface {
   validate(phoneNumber: string, args: ValidationArguments) {
     const phoneRegex = /^\+\d{1,3}\d{4,14}$/;
+    
     return phoneRegex.test(phoneNumber);
   }
 

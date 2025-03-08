@@ -1,10 +1,11 @@
 import { BadRequestException, Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiConsumes, ApiBody, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InvoicesService } from '../service/invoices.service';
 import { CreateInvoiceDto } from '../dto/create-invoice.dto';
 import { InvoiceResponseDto } from '../dto';
 
+@ApiTags('Invoices')
 @Controller('invoices')
 export class InvoicesController {
     constructor(private readonly invoicesService: InvoicesService) { }

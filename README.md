@@ -23,29 +23,43 @@ This project is a NestJS application designed to handle the uploading of CSV fil
 
 ## Installation
 
-1. Clone the repository:
+- Clone the repository:
 
-```
-git clone <repository-url>
+```bash
+  git clone https://github.com/SebaTOSS/brubank-challange
 ```
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
+- Install dependencies:
+
+```bash
+npm install
+```
 
 ## Usage
 
 To start the application, run:
-```
+
+```bash
 npm run start
 ```
 
 The application will be available at `http://localhost:3000`.
 
+## Testing
+
+To run tests, use the following command:
+
+```bash
+npm run test
+```
+
+## Documentation
+
+The API documentation is available at `http://localhost:3000/api/documentation`.
+
 ## API Endpoints
 
-- **POST /invoice/upload**: Upload a CSV file for processing.
+- **GET /health**: Check the health of the application.
 - **POST /invoice/generate**: Generate an invoice based on the provided payload.
 
 ## Contributing

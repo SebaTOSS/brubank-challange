@@ -3,7 +3,7 @@ version: '3'
 services:
   app:
     build: .
-    container_name: emilabs-node-refactor
+    container_name: brubank-invoice
     ports:
       - '${PORT}:${PORT}'
     volumes:
@@ -12,11 +12,10 @@ services:
     depends_on:
       - database
       - cache
-      - queuemq
 
   database:
     image: postgres
-    container_name: emilabs-node-refactor-database
+    container_name: brubank-invoice-database
     environment:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
@@ -35,7 +34,7 @@ services:
 
   cache:
     image: redis:alpine
-    container_name: emilabs-node-refactor-redis
+    container_name: brubank-invoice-redis
     ports:
       - "${CACHE_PORT}:${CACHE_PORT}"
     environment:
@@ -44,21 +43,6 @@ services:
     volumes:
       - cache_data:/data
 
-  queuemq:
-    image: rabbitmq:3-management
-    container_name: emilabs-node-refactor-rabbitmq
-    ports:
-      - "${MQ_PORT}:${MQ_PORT}"
-      - "15672:15672"
-    environment:
-      RABBITMQ_HOST: ${MQ_HOST}
-      RABBITMQ_PORT: ${MQ_PORT}
-      RABBITMQ_DEFAULT_USER: ${MQ_USERNAME}
-      RABBITMQ_DEFAULT_PASS: ${MQ_PASSWORD}
-    volumes:
-      - queuemq_data:/var/lib/rabbitmq
-
 volumes:
   postgres_data:
   cache_data:
-  queuemq_data:

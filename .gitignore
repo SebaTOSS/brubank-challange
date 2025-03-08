@@ -1,24 +1,24 @@
 node_modules/*
 /dist/*
 # compiled output
-/node-refactor/dist
-/node-refactor/node_modules
-/node-refactor/build
+dist
+node_modules
+build
 
 # Logs
 logs
 *.log
-/node-refactor/npm-debug.log*
-/node-refactor/pnpm-debug.log*
-/node-refactor/yarn-debug.log*
-/node-refactor/yarn-error.log*
-/node-refactor/lerna-debug.log*
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # OS
 .DS_Store
 
 # Tests
-/node-refactor/coverage
+coverage
 /.nyc_output
 
 # IDEs and editors
@@ -38,15 +38,15 @@ logs
 !.vscode/extensions.json
 
 # dotenv environment variable files
-/node-refactor/.env
-/node-refactor/.env.development.local
-/node-refactor/.env.test.local
-/node-refactor/.env.production.local
-/node-refactor/.env.local
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
 
 # temp directory
-/node-refactor/.temp
-/node-refactor/.tmp
+.temp
+.tmp
 
 # Runtime data
 pids

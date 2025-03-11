@@ -11,7 +11,7 @@ export class UsersService {
         private readonly httpService: HttpService,
         private readonly configService: ConfigService,
     ) {
-        this.externalUsersApiUrl = this.configService.get<string>('external.users.api.url');
+        this.externalUsersApiUrl = this.configService.get<string>('USER_SERVICE_BASE_URL');
     }
 
     async getUserInfo(phoneNumber: string): Promise<UserDto> {

@@ -15,6 +15,9 @@ import { InvoicesModule } from './invoices/invoices.module';
     BillingModule,
     InvoicesModule,
   ],
+  providers: [
+    
+  ],
 })
 export class AppModule { }
 

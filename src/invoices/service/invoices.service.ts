@@ -2,19 +2,24 @@ import { Injectable } from '@nestjs/common';
 import { Readable } from 'stream';
 import { InvoiceResponseDto } from '../dto';
 import { UsersService } from '../../users/service/users.service';
-import { BillingContextData } from '../../billing/strategies/billing-strategy';
+import { BillingContextData } from '../../billing/strategies/interfaces';
 import { BillingContext } from '../../billing/billing-context';
-import { isBetweenDates, createDate, isInternationalCall } from '../../utils/utils';
-import { ROW_HEADERS } from '../constants';
+import { TotalizationContext } from '../../billing/totalization/totalization-context';
+import {
+  createDate,
+  isBetweenDates,
+  isNationalCall,
+  isInternationalCall,
+} from '../../utils/utils';
 import {
   CsvRow,
   Call,
-  CalculateTotals,
   ParsedCallPayload,
   ParseRowParams,
   BillingContextMetadata,
   CallResponseDto,
 } from '../interfaces';
+import { ROW_HEADERS } from '../constants';
 import * as csv from 'csv-parser';
 
 @Injectable()
@@ -22,6 +27,7 @@ export class InvoicesService {
   constructor(
     private readonly userService: UsersService,
     private billingContext: BillingContext,
+    private totalizationContext: TotalizationContext,
   ) { }
 
   async generateInvoice(
@@ -79,11 +85,10 @@ export class InvoicesService {
   private parseRow(params: ParseRowParams): void {
     const { row, phoneNumber, startDate, endDate, friendCallCounts, user, calls } = params;
 
-    const origin = row[ROW_HEADERS.ORIGIN];
-    const destination = row[ROW_HEADERS.DESTINATION];
-    const duration = parseInt(row[ROW_HEADERS.DURATION], 10);
-    const timestamp = row[ROW_HEADERS.TIMESTAMP];
-    const shouldProcess = origin === phoneNumber && isBetweenDates(timestamp, startDate, endDate);
+    const { origin, timestamp, destination, duration } = this.extractInvoiceData(row);
+    const isPhoneToProcess = origin === phoneNumber;
+    const isInProcessingPeriod = isBetweenDates(timestamp, startDate, endDate);
+    const shouldProcess = isPhoneToProcess && isInProcessingPeriod;
 
     if (shouldProcess) {
       const isFriend = this.isFriendCall(destination, user.friends);
@@ -105,20 +110,35 @@ export class InvoicesService {
     }
   }
 
+  private extractInvoiceData(row: CsvRow): { origin: string, timestamp: string, destination: string, duration: number } {
+    const origin = row[ROW_HEADERS.ORIGIN];
+    const destination = row[ROW_HEADERS.DESTINATION];
+    const duration = parseInt(row[ROW_HEADERS.DURATION], 10);
+    const timestamp = row[ROW_HEADERS.TIMESTAMP];
+
+    return {
+      origin,
+      timestamp,
+      destination,
+      duration,
+    };
+  }
+
   private createCallRecord(
     context: BillingContextData,
     destination: string,
     duration: number,
     timestamp: string,
-    isFriend: boolean
+    isFriend: boolean,
   ): Call {
     return {
       destination,
       duration,
       timestamp,
+      isFriend,
       amount: this.billingContext.calculateCost(context),
       isInternational: isInternationalCall(context.origin, destination),
-      isFriend
+      isNational: isNationalCall(context.origin, destination),
     };
   }
 
@@ -130,30 +150,36 @@ export class InvoicesService {
     const isFriendCall = this.isFriendCall(destination, friends);
     if (isFriendCall) {
       friendCallCounts[destination] = (friendCallCounts[destination] || 0) + 1;
-      
+
       return friendCallCounts[destination];
     }
 
     return 0;
   }
 
-  private calculateTotal(calls: Call[]): CalculateTotals {
-    return {
-      totalInternationalSeconds: calls.reduce((acc, call) => acc + (call.isInternational ? call.duration : 0), 0),
-      totalNationalSeconds: calls.reduce((acc, call) => acc + (!call.isInternational ? call.duration : 0), 0),
-      totalFriendsSeconds: calls.reduce((acc, call) => acc + (call.isFriend ? call.duration : 0), 0),
-      total: calls.reduce((acc, call) => acc + call.amount, 0),
-    };
+  private calculateTotal(calls: Call[]): any {
+    return this.totalizationContext.processCalls(calls);
   }
 
   private transformCall(call: Call): CallResponseDto {
-    const { destination: phoneNumber, duration, timestamp, amount } = call;
+    const {
+      destination: phoneNumber,
+      duration,
+      timestamp,
+      amount,
+      isNational,
+      isInternational,
+      isFriend,
+    } = call;
 
     return {
       phoneNumber,
       duration,
       timestamp,
       amount,
+      isNational,
+      isInternational,
+      isFriend,
     };
   }
 

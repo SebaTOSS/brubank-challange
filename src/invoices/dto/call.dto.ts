@@ -1,11 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber } from 'class-validator';
+import { Exclude } from 'class-transformer';
+import { IsString, IsNumber, IsBoolean } from 'class-validator';
 
 export class CallDto {
     @ApiProperty({ description: 'Phone number of the call destination', example: '+54911111111' })
     @IsString()
     phoneNumber: string;
-  
+
     @ApiProperty({ description: 'Duration of the call in seconds', example: 60 })
     @IsNumber()
     duration: number;
@@ -17,4 +18,16 @@ export class CallDto {
     @ApiProperty({ description: 'Amount charged for the call', example: 2.5 })
     @IsNumber()
     amount: number;
+
+    @Exclude()
+    @IsBoolean()
+    isNational: boolean;
+
+    @Exclude()
+    @IsBoolean()
+    isInternational: boolean;
+
+    @Exclude()
+    @IsBoolean()
+    isFriend: boolean;
 }

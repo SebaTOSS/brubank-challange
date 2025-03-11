@@ -1,6 +1,7 @@
-import { BillingContextData } from '../strategies/billing-strategy';
-import { UserDto } from '../../users/dto/user.dto';
+import { ModuleRef } from '@nestjs/core';
+import { BillingContextData } from '../strategies';
 import { BillingContext } from '../billing-context';
+import { UserDto } from '../../users/dto/user.dto';
 
 const MOCK_USER: UserDto = {
     phoneNumber: '+549116543219',
@@ -28,7 +29,8 @@ describe('BillingContextData', () => {
     let billingContext: BillingContext;
 
     beforeEach(async () => {
-        billingContext = new BillingContext();
+        const moduleRef = { get: jest.fn() } as unknown as ModuleRef;
+        billingContext = new BillingContext(moduleRef);
     });
 
     it('should be defined', () => {
@@ -38,13 +40,13 @@ describe('BillingContextData', () => {
     describe('registerStrategy', () => {
         it('should register a strategy', () => {
             billingContext.registerStrategy(MOCKED_STRATEGY);
-            expect(billingContext['strategies']).toHaveLength(1);
+            expect(billingContext['billingStrategies']).toHaveLength(1);
         });
 
         it('should not register a strategy twice', () => {
             billingContext.registerStrategy(MOCKED_STRATEGY);
             billingContext.registerStrategy(MOCKED_STRATEGY);
-            expect(billingContext['strategies']).toHaveLength(1);
+            expect(billingContext['billingStrategies']).toHaveLength(1);
         });
     });
 

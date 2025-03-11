@@ -3,12 +3,14 @@ import { NotFoundException } from '@nestjs/common';
 import { InvoicesService } from '../invoices.service';
 import { UsersService } from '../../../users/service/users.service';
 import { BillingContext } from '../../../billing/billing-context';
+import { TotalizationContext } from '../../../billing/totalization/totalization-context';
 import { InvoiceResponseDto } from '../../dto';
 
 describe('InvoicesService', () => {
     let service: InvoicesService;
     let usersService: UsersService;
     let billingContext: BillingContext;
+    let totalizationContext: TotalizationContext;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -26,12 +28,19 @@ describe('InvoicesService', () => {
                         calculateCost: jest.fn(),
                     },
                 },
+                {
+                    provide: TotalizationContext,
+                    useValue: {
+                        processCalls: jest.fn(),
+                    },
+                }
             ],
         }).compile();
 
         service = module.get<InvoicesService>(InvoicesService);
         usersService = module.get<UsersService>(UsersService);
         billingContext = module.get<BillingContext>(BillingContext);
+        totalizationContext = module.get<TotalizationContext>(TotalizationContext);
     });
 
     it('should generate an invoice with correct totals', async () => {
@@ -58,6 +67,12 @@ describe('InvoicesService', () => {
             if (destination === '+191167980952') {
                 return duration * 0.75;
             }
+        });
+        jest.spyOn(totalizationContext, 'processCalls').mockReturnValue({
+            totalInternationalSeconds: 120,
+            totalNationalSeconds: 60,
+            totalFriendsSeconds: 60,
+            total: 90,
         });
 
         const result: InvoiceResponseDto = await service.generateInvoice(file, phoneNumber, billingPeriodStart, billingPeriodEnds);

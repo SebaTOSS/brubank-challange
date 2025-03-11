@@ -9,8 +9,9 @@ export interface Call {
     duration: number;
     timestamp: string;
     amount: number;
-    isInternational: boolean;
     isFriend: boolean;
+    isNational: boolean
+    isInternational: boolean;
 }
 
 export interface CalculateTotals {
@@ -33,6 +34,9 @@ export interface CallResponseDto {
     duration: number;
     timestamp: string;
     amount: number;
+    isFriend: boolean;
+    isNational: boolean;
+    isInternational: boolean;
 }
 
 export interface ParseRowParams {

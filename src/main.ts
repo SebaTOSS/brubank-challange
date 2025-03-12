@@ -35,7 +35,9 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }));
   app.use(urlencoded({ extended: true, limit: '10mb' }));
 
-  await app.listen(configService.get<number>('PORT') || 3000);
+  await app.listen(configService.get<number>('PORT') || 3000, () => {
+    console.log(`📖 API documentation available at /api/documentation`);
+  });
 }
 
 bootstrap();

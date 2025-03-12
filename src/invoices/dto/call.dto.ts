@@ -5,7 +5,7 @@ export class CallDto {
     @ApiProperty({ description: 'Phone number of the call destination', example: '+54911111111' })
     @IsString()
     phoneNumber: string;
-  
+
     @ApiProperty({ description: 'Duration of the call in seconds', example: 60 })
     @IsNumber()
     duration: number;

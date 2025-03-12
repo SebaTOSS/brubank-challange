@@ -1,4 +1,4 @@
-import { UserDto } from "../../users/dto";
+import { UserDto } from "../../../users/dto";
 
 export interface BillingStrategy {
     shouldApply(context: BillingContextData): boolean;

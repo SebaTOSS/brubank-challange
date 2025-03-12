@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { FriendStrategy } from '../friend.strategy';
-import { BillingContextData } from '../billing-strategy';
+import { BillingContextData } from '../interfaces';
 import { UserDto } from '../../../users/dto/user.dto';
 
 const MOCK_USER: UserDto = {

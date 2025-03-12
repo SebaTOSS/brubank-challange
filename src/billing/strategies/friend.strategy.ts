@@ -1,13 +1,13 @@
-import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { BillingStrategy, BillingContextData } from "./billing-strategy";
+import { BillingStrategy, BillingContextData } from "./interfaces";
+import { BillingStrategyDecorator } from "./decorators/billing-strategy.decorator";
 
-@Injectable()
+@BillingStrategyDecorator()
 export class FriendStrategy implements BillingStrategy {
     private freeCalls: number;
 
     constructor(private configService: ConfigService) {
-        this.freeCalls = this.configService.get<number>('billing.friends.freeCalls');
+        this.freeCalls = this.configService.get<number>('BILLING_FREE_FRIEND_CALLS');
     }
 
     shouldApply(context: BillingContextData): boolean {

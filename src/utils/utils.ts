@@ -23,7 +23,11 @@ export function isInternationalCall(origin: string, destination: string): boolea
 }
 
 export function isBetweenDates(date: string, start: Date, end: Date): boolean {
-    return moment(date).isBetween(start, end, undefined, '[]');
+    const momentDate = moment(date);
+    const momentStart = moment(start);
+    const momentEnd = moment(end);
+    
+    return momentDate.isBetween(momentStart, momentEnd, undefined, '[]');
 }
 
 export function createDate(date: string): any {

@@ -1,26 +1,11 @@
-import { Module, Inject } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { BillingContext } from "./billing-context";
-import { BillingStrategy, NationalStrategy, InternationalStrategy, FriendStrategy } from "./strategies";
+import { TotalizationModule } from './totalization/totalization.module';
+import { BillingStrategiesModule } from './strategies/strategies.module';
 
 @Module({
-    providers: [
-        BillingContext,
-        FriendStrategy,
-        InternationalStrategy,
-        NationalStrategy,
-        {
-            provide: 'STRATEGIES',
-            useFactory: (...strategies: BillingStrategy[]) => strategies,
-            inject: [NationalStrategy, InternationalStrategy, FriendStrategy]
-        }
-    ],
-    exports: [BillingContext]
+    imports: [BillingStrategiesModule, TotalizationModule],
+    providers: [BillingContext],
+    exports: [BillingContext, TotalizationModule]
 })
-export class BillingModule {
-    constructor(
-        billingContext: BillingContext,
-        @Inject('STRATEGIES') strategies: BillingStrategy[]
-    ) {
-        strategies.forEach(strategy => billingContext.registerStrategy(strategy));
-    }
-}
+export class BillingModule { }

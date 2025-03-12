@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsArray, ValidateNested } from 'class-validator';
+import { IsArray, ValidateNested, IsObject, IsNumber, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UserDto } from '../../users/dto/user.dto';
 import { CallDto } from './call.dto';
+import { UserDto } from '../../users/dto/user.dto';
 
 export class InvoiceResponseDto {
     @ApiProperty({ type: UserDto })
@@ -18,17 +18,20 @@ export class InvoiceResponseDto {
 
     @ApiProperty({ description: 'Total international seconds', example: 60 })
     @IsNumber()
-    totalInternationalSeconds: number;
-
+    @IsOptional()
+    totalInternationalSeconds?: number;
+  
     @ApiProperty({ description: 'Total national seconds', example: 120 })
     @IsNumber()
-    totalNationalSeconds: number;
-
+    @IsOptional()
+    totalNationalSeconds?: number;
+  
     @ApiProperty({ description: 'Total friends seconds', example: 30 })
     @IsNumber()
-    totalFriendsSeconds: number;
-
+    @IsOptional()
+    totalFriendsSeconds?: number;
+  
     @ApiProperty({ description: 'Total amount', example: 50.75 })
     @IsNumber()
-    total: number;
+    total?: number;
 }

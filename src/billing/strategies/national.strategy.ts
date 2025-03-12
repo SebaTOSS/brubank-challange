@@ -1,14 +1,14 @@
-import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { BillingStrategy, BillingContextData } from "./billing-strategy";
+import { BillingStrategy, BillingContextData } from "./interfaces";
+import { BillingStrategyDecorator } from "./decorators/billing-strategy.decorator";
 import { isNationalCall } from "../../utils/utils";
 
-@Injectable()
+@BillingStrategyDecorator()
 export class NationalStrategy implements BillingStrategy {
     private rate: number;
 
     constructor(private configService: ConfigService) {
-        this.rate = this.configService.get<number>('billing.rates.national');
+        this.rate = this.configService.get<number>('BILLING_NATIONAL_RATE');
     }
 
     shouldApply(context: BillingContextData): boolean {

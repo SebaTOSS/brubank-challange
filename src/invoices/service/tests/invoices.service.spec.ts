@@ -1,16 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
 import { InvoicesService } from '../invoices.service';
 import { UsersService } from '../../../users/service/users.service';
-import { BillingContext } from '../../../billing/billing-context';
-import { TotalizationContext } from '../../../billing/totalization/totalization-context';
+import { CallProcessingService } from '../call-processing.service';
 import { InvoiceResponseDto } from '../../dto';
+import { Call } from '../../interfaces';
 
 describe('InvoicesService', () => {
     let service: InvoicesService;
     let usersService: UsersService;
-    let billingContext: BillingContext;
-    let totalizationContext: TotalizationContext;
+    let callProcessingService: CallProcessingService;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -23,112 +21,146 @@ describe('InvoicesService', () => {
                     },
                 },
                 {
-                    provide: BillingContext,
-                    useValue: {
-                        calculateCost: jest.fn(),
-                    },
-                },
-                {
-                    provide: TotalizationContext,
+                    provide: CallProcessingService,
                     useValue: {
                         processCalls: jest.fn(),
                     },
-                }
+                },
             ],
         }).compile();
 
         service = module.get<InvoicesService>(InvoicesService);
         usersService = module.get<UsersService>(UsersService);
-        billingContext = module.get<BillingContext>(BillingContext);
-        totalizationContext = module.get<TotalizationContext>(TotalizationContext);
+        callProcessingService = module.get<CallProcessingService>(CallProcessingService);
     });
 
-    it('should generate an invoice with correct totals', async () => {
+    it('should generate an invoice with user, transformed calls, and totals', async () => {
         const phoneNumber = '+5491167910920';
         const billingPeriodStart = '2025-01-01';
         const billingPeriodEnds = '2025-01-31';
         const file = {
-            buffer: Buffer.from(`numero origen,numero destino,duracion,fecha\n${phoneNumber},+54911111111,60,2025-01-15T10:00:00Z\n${phoneNumber},+191167980952,120,2025-01-20T10:00:00Z`),
+            buffer: Buffer.from('mock csv content'),
         } as Express.Multer.File;
 
-        const userResponse = {
+        const user = {
             phoneNumber,
             address: 'Avenida siempre viva',
             name: 'Juan Sanchez',
             friends: ['+54911111111'],
         };
+        jest.spyOn(usersService, 'getUserInfo').mockResolvedValue(user);
 
-        jest.spyOn(usersService, 'getUserInfo').mockResolvedValue(userResponse);
-        jest.spyOn(billingContext, 'calculateCost').mockImplementation((context) => {
-            const { duration, destination } = context;
-            if (destination === '+54911111111') {
-                return 0;
-            }
-            if (destination === '+191167980952') {
-                return duration * 0.75;
-            }
-        });
-        jest.spyOn(totalizationContext, 'processCalls').mockReturnValue({
-            totalInternationalSeconds: 120,
-            totalNationalSeconds: 60,
-            totalFriendsSeconds: 60,
+        const rawCalls: Call[] = [
+            {
+                destination: '+54911111111',
+                duration: 60,
+                timestamp: '2025-01-15T10:00:00Z',
+                amount: 0,
+                isFriend: true,
+                isNational: true,
+                isInternational: false,
+            },
+            {
+                destination: '+191167980952',
+                duration: 120,
+                timestamp: '2025-01-20T10:00:00Z',
+                amount: 90,
+                isFriend: false,
+                isNational: false,
+                isInternational: true,
+            },
+        ];
+        const totals = {
             total: 90,
-        });
-
-        const result: InvoiceResponseDto = await service.generateInvoice(file, phoneNumber, billingPeriodStart, billingPeriodEnds);
-
-        expect(result.user).toEqual(userResponse);
-        expect(result.calls.length).toBe(2);
-        expect(result.totalInternationalSeconds).toBe(120);
-        expect(result.totalNationalSeconds).toBe(60);
-        expect(result.totalFriendsSeconds).toBe(60);
-        expect(result.total).toBe(90);
-    });
-
-    it('should throw NotFoundException if user does not exist', async () => {
-        const phoneNumber = '+5491167910920';
-        const billingPeriodStart = '2025-01-01';
-        const billingPeriodEnds = '2025-01-31';
-        const file = {
-            buffer: Buffer.from(`numero origen,numero destino,duracion,fecha\n${phoneNumber},+54911111111,60,2025-01-15T10:00:00Z`),
-        } as Express.Multer.File;
-
-        jest.spyOn(usersService, 'getUserInfo').mockRejectedValue(new NotFoundException());
-
-        await expect(service.generateInvoice(file, phoneNumber, billingPeriodStart, billingPeriodEnds)).rejects.toThrow(NotFoundException);
-    });
-
-    it('should parse CSV correctly', async () => {
-        const phoneNumber = '+5491167910920';
-        const billingPeriodStart = '2025-01-01';
-        const billingPeriodEnds = '2025-01-31';
-        const file = {
-            buffer: Buffer.from(`numero origen,numero destino,duracion,fecha\n${phoneNumber},+54911111111,60,2025-01-15T10:00:00Z\n${phoneNumber},+191167980952,120,2025-01-20T10:00:00Z`),
-        } as Express.Multer.File;
-
-        const userResponse = {
-            phoneNumber,
-            address: 'Avenida siempre viva',
-            name: 'Juan Sanchez',
-            friends: ['+54911111111'],
+            totalNationalSeconds: 60,
+            totalInternationalSeconds: 120,
+            totalFriendsSeconds: 60,
         };
+        jest.spyOn(callProcessingService, 'processCalls').mockResolvedValue({ calls: rawCalls, totals });
 
-        jest.spyOn(usersService, 'getUserInfo').mockResolvedValue(userResponse);
-
-        const calls = await service['parseCsv']({
+        const result: InvoiceResponseDto = await service.generateInvoice(
             file,
             phoneNumber,
             billingPeriodStart,
             billingPeriodEnds,
-            user: userResponse,
+        );
+
+        expect(result).toBeDefined();
+        expect(result.user).toEqual({
+            phoneNumber,
+            address: 'Avenida siempre viva',
+            name: 'Juan Sanchez',
+            friends: ['+54911111111'],
         });
 
-        expect(calls.length).toBe(2);
-        expect(calls[0].destination).toBe('+54911111111');
-        expect(calls[0].duration).toBe(60);
-        expect(calls[0].timestamp).toBe('2025-01-15T10:00:00Z');
-        expect(calls[1].destination).toBe('+191167980952');
-        expect(calls[1].duration).toBe(120);
-        expect(calls[1].timestamp).toBe('2025-01-20T10:00:00Z');
+        expect(result.calls).toHaveLength(2);
+        const [friendCall, intlCall] = result.calls;
+        expect(friendCall).toEqual({
+            phoneNumber: '+54911111111',
+            duration: 60,
+            timestamp: '2025-01-15T10:00:00Z',
+            amount: 0,
+        });
+        expect(intlCall).toEqual({
+            phoneNumber: '+191167980952',
+            duration: 120,
+            timestamp: '2025-01-20T10:00:00Z',
+            amount: 90,
+        });
+
+        expect(result.total).toBe(90);
+        expect(result.totalNationalSeconds).toBe(60);
+        expect(result.totalInternationalSeconds).toBe(120);
+        expect(result.totalFriendsSeconds).toBe(60);
+
+        expect(usersService.getUserInfo).toHaveBeenCalledWith(phoneNumber);
+        expect(callProcessingService.processCalls).toHaveBeenCalledWith({
+            file,
+            phoneNumber,
+            billingPeriodStart,
+            billingPeriodEnds,
+            user,
+        });
+    });
+
+    it('should handle empty calls and return invoice with zero totals', async () => {
+        const phoneNumber = '+5491167910920';
+        const billingPeriodStart = '2025-01-01';
+        const billingPeriodEnds = '2025-01-31';
+        const file = {
+            buffer: Buffer.from('mock empty csv'),
+        } as Express.Multer.File;
+
+        const user = {
+            phoneNumber,
+            address: 'Avenida siempre viva',
+            name: 'Juan Sanchez',
+            friends: ['+54911111111'],
+        };
+        jest.spyOn(usersService, 'getUserInfo').mockResolvedValue(user);
+
+        jest.spyOn(callProcessingService, 'processCalls').mockResolvedValue({
+            calls: [],
+            totals: { total: 0 },
+        });
+
+        const result: InvoiceResponseDto = await service.generateInvoice(
+            file,
+            phoneNumber,
+            billingPeriodStart,
+            billingPeriodEnds,
+        );
+
+        expect(result.user).toEqual({
+            phoneNumber,
+            address: 'Avenida siempre viva',
+            name: 'Juan Sanchez',
+            friends: ['+54911111111'],
+        });
+        expect(result.calls).toHaveLength(0);
+        expect(result.total).toBe(0);
+        expect(result.totalNationalSeconds).toBeUndefined();
+        expect(result.totalInternationalSeconds).toBeUndefined();
+        expect(result.totalFriendsSeconds).toBeUndefined();
     });
 });

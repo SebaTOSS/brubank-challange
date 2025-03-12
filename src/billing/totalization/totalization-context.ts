@@ -8,6 +8,7 @@ import { TOTALIZATION_STRATEGY_METADATA } from "./decorators/totalization-strate
 @Injectable()
 export class TotalizationContext implements OnModuleInit {
     private totalizationStrategies: TotalizationStrategy[] = [];
+    private totals: Record<string, number> = {};
 
     constructor(private moduleRef: ModuleRef) { }
 
@@ -31,20 +32,33 @@ export class TotalizationContext implements OnModuleInit {
         this.totalizationStrategies.push(strategy);
     }
 
-    processCalls(calls: Call[]): Record<string, number> {
+    processCalls(calls: Call[]): void {
         this.setUpProcessCalls();
-        const totals: Record<StrategyType, number> = {} as Record<StrategyType, number>;
-
-        this.totalizationStrategies.forEach(strategy => {
-            calls.forEach(call => strategy.processCall(call));
-            const [field, value] = strategy.getResult();
-            totals[field] = value;
-        });
-
-        return totals;
+        calls.forEach(call => this.processCall(call));
     }
 
-    private setUpProcessCalls(): void {
+    processCall(call: Call): void {
+        this.totalizationStrategies.forEach(strategy => {
+            strategy.processCall(call);
+            const [field, value] = strategy.getResult();
+            this.totals[field] = value;
+        });
+    }
+
+    setUpProcessCalls() {
+        this.resetStrategies();
+        this.resetTotals();
+    }
+
+    getTotals(): Record<string, number> {
+        return { ...this.totals };
+    }
+
+    private resetTotals(): void {
+        this.totals = {};
+    }
+
+    private resetStrategies() {
         this.totalizationStrategies.forEach(strategy => {
             strategy.reset();
         });

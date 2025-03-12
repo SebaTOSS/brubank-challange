@@ -33,5 +33,5 @@ export class InvoiceResponseDto {
   
     @ApiProperty({ description: 'Total amount', example: 50.75 })
     @IsNumber()
-    total: number;
+    total?: number;
 }

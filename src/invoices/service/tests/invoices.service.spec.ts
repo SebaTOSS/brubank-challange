@@ -56,18 +56,12 @@ describe('InvoicesService', () => {
                 duration: 60,
                 timestamp: '2025-01-15T10:00:00Z',
                 amount: 0,
-                isFriend: true,
-                isNational: true,
-                isInternational: false,
             },
             {
                 destination: '+191167980952',
                 duration: 120,
                 timestamp: '2025-01-20T10:00:00Z',
                 amount: 90,
-                isFriend: false,
-                isNational: false,
-                isInternational: true,
             },
         ];
         const totals = {

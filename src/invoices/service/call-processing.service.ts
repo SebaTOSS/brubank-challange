@@ -3,23 +3,27 @@ import { Readable } from 'stream';
 import { BillingContext } from '../../billing/billing-context';
 import { BillingContextData } from '../../billing/strategies';
 import { TotalizationContext } from '../../billing/totalization/totalization-context';
+import { CallTypeContext } from '../../billing/type-strategies/call-type.context';
+import { CallData, CallMetadata } from '../../billing/type-strategies/interfaces';
 import {
-    CsvRow,
     Call,
-    ParsedCallPayload,
+    CsvRow,
+    ParsedRow,
     ParseRowParams,
-    BillingContextMetadata,
-    ProcessStreamParams,
+    ParsedCallPayload,
     ProcessCallsResult,
+    ProcessStreamParams,
+    BillingContextMetadata,
 } from '../interfaces';
 import { ROW_HEADERS } from '../constants';
-import { isNationalCall, isBetweenDates, isInternationalCall } from '../../utils/utils';
+import { isBetweenDates } from '../../utils/utils';
 import * as csv from 'csv-parser';
 
 @Injectable()
 export class CallProcessingService {
     constructor(
         private readonly billingContext: BillingContext,
+        private readonly callTypeContext: CallTypeContext,
         private readonly totalizationContext: TotalizationContext,
     ) { }
 
@@ -37,17 +41,20 @@ export class CallProcessingService {
             user,
             friendCallCounts,
             calls,
-        }
+        };
 
         await this.processCsvStream(processStreamParams);
         const totals = this.totalizationContext.getTotals();
 
-        return { calls, totals };
+        const result: ProcessCallsResult = { calls, totals };
+        
+        return result;
     }
 
     private processCsvStream(params: ProcessStreamParams): Promise<void> {
         const { file, phoneNumber, startDate, endDate, user, friendCallCounts, calls } = params;
-        this.totalizationContext.setUpProcessCalls();
+        this.callTypeContext.initialize();
+        this.totalizationContext.initialize();
         return new Promise((resolve, reject) => {
             const stream = Readable.from(file.buffer.toString());
             stream
@@ -74,26 +81,35 @@ export class CallProcessingService {
     }
 
     private processRow(params: ParseRowParams): Call | null {
-        const { row, phoneNumber, startDate, endDate, user, friendCallCounts } = params;
+        const { row, phoneNumber, startDate, endDate, user } = params;
         const { origin, timestamp, destination, duration } = this.extractInvoiceData(row);
-        if (origin !== phoneNumber || !isBetweenDates(timestamp, startDate, endDate)) {
+        
+        const isPhoneNumber = origin === phoneNumber;
+        const isInRange = isBetweenDates(timestamp, startDate, endDate);
+        if (!isPhoneNumber || !isInRange) {
             return null;
         }
 
-        const isFriend = this.isFriendCall(destination, user.friends);
-        const callCount = this.updateFriendCallCounts(destination, user.friends, friendCallCounts);
+        const callData: CallData = {
+            origin,
+            destination,
+            duration,
+            timestamp,
+            user,
+        };
+        const metadata = this.callTypeContext.processCall(callData);
 
         const context: BillingContextData = {
             origin,
             destination,
             duration,
-            metadata: { user, callCount, timestamp } as BillingContextMetadata,
+            metadata: { ...metadata, user } as BillingContextMetadata,
         };
 
-        return this.createCallRecord(context, destination, duration, timestamp, isFriend);
+        return this.createCallRecord(context, destination, duration, timestamp);
     }
 
-    private extractInvoiceData(row: CsvRow): { origin: string; timestamp: string; destination: string; duration: number } {
+    private extractInvoiceData(row: CsvRow): ParsedRow {
         const origin = row[ROW_HEADERS.ORIGIN];
         const destination = row[ROW_HEADERS.DESTINATION];
         const duration = parseInt(row[ROW_HEADERS.DURATION], 10);
@@ -111,30 +127,16 @@ export class CallProcessingService {
         destination: string,
         duration: number,
         timestamp: string,
-        isFriend: boolean,
     ): Call {
+        const metadata = context.metadata as CallMetadata;
         const amount = this.billingContext.calculateCost(context);
 
         return {
             destination,
             duration,
             timestamp,
-            isFriend,
             amount,
-            isInternational: isInternationalCall(context.origin, destination),
-            isNational: isNationalCall(context.origin, destination),
+            metadata,
         };
-    }
-
-    private updateFriendCallCounts(destination: string, friends: string[], friendCallCounts: Record<string, number>): number {
-        if (this.isFriendCall(destination, friends)) {
-            friendCallCounts[destination] = (friendCallCounts[destination] || 0) + 1;
-            return friendCallCounts[destination];
-        }
-        return 0;
-    }
-
-    private isFriendCall(phoneNumber: string, friends: string[]): boolean {
-        return friends.includes(phoneNumber);
     }
 }

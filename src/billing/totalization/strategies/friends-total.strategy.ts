@@ -1,15 +1,14 @@
 import { TotalizationStrategy } from '../interfaces';
-import { StrategyType } from '../types';
 import { TotalizationStrategyDecorator } from '../decorators/totalization-strategy.decorator';
 import { Call } from '../../../invoices/interfaces';
 
 @TotalizationStrategyDecorator()
 export class FriendsTotalStrategy implements TotalizationStrategy {
-    readonly type = StrategyType.FRIEND;
+    public readonly type = 'FRIEND';
     private total = 0;
 
     processCall(call: Call): void {
-        if (call.isFriend) {
+        if (call.metadata?.isFriend) {
             this.total += call.duration;
         }
     }

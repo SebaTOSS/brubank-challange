@@ -1,17 +1,16 @@
 import { ModuleRef, ModulesContainer } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TotalizationContext } from '../totalization-context';
-import { TotalizationStrategy } from '../interfaces';
-import { StrategyType } from '../types';
-import { Call } from '../../../invoices/interfaces';
 import { TOTALIZATION_STRATEGY_METADATA } from '../decorators/totalization-strategy.decorator';
+import { TotalizationStrategy } from '../interfaces';
+import { Call } from '../../../invoices/interfaces';
 
 describe('TotalizationContext', () => {
     let context: TotalizationContext;
     let moduleRef: ModuleRef;
 
     const mockStrategy: TotalizationStrategy = {
-        type: StrategyType.AMOUNT,
+        type: 'DUMMY',
         processCall: jest.fn(),
         getResult: jest.fn(() => ['totalSeconds', 0]),
         reset: jest.fn(),
@@ -61,7 +60,7 @@ describe('TotalizationContext', () => {
     describe('registerStrategy', () => {
         it('should add a strategy to the list', () => {
             const newStrategy: TotalizationStrategy = {
-                type: StrategyType.AMOUNT,
+                type: 'AMOUNT',
                 processCall: jest.fn(),
                 getResult: jest.fn(() => ['totalMock', 10]),
                 reset: jest.fn(),
@@ -74,12 +73,28 @@ describe('TotalizationContext', () => {
     describe('processCalls', () => {
         it('should process multiple calls and reset totals', () => {
             const calls: Call[] = [
-                { destination: '+54911111111', duration: 60, timestamp: '2025-01-01', amount: 0, isFriend: true, isNational: true, isInternational: false },
-                { destination: '+191167980952', duration: 120, timestamp: '2025-01-02', amount: 90, isFriend: false, isNational: false, isInternational: true },
+                {
+                    destination: '+54911111111',
+                    duration: 60,
+                    timestamp: '2025-01-01',
+                    amount: 0,
+                    metadata: {
+                        isFriend: true,
+                        isNational: true,
+                        isInternational: false,
+                    },
+                },
+                {
+                    destination: '+191167980952',
+                    duration: 120,
+                    timestamp: '2025-01-02',
+                    amount: 90,
+                    metadata: { isFriend: false, isNational: false, isInternational: true },
+                },
             ];
 
             const strategy1: TotalizationStrategy = {
-                type: StrategyType.AMOUNT,
+                type: 'DUMMY',
                 processCall: jest.fn(),
                 getResult: jest.fn(() => ['totalSeconds', 180]),
                 reset: jest.fn(),
@@ -103,13 +118,15 @@ describe('TotalizationContext', () => {
                 duration: 60,
                 timestamp: '2025-01-01',
                 amount: 0,
-                isFriend: true,
-                isNational: true,
-                isInternational: false,
+                metadata: {
+                    isFriend: true,
+                    isNational: true,
+                    isInternational: false,
+                },
             };
 
             const strategy1: TotalizationStrategy = {
-                type: StrategyType.AMOUNT,
+                type: 'DUMMY',
                 processCall: jest.fn(),
                 getResult: jest.fn(() => ['totalSeconds', 60]),
                 reset: jest.fn(),
@@ -126,7 +143,7 @@ describe('TotalizationContext', () => {
     describe('getTotals', () => {
         it('should return a copy of the totals', () => {
             const strategy1: TotalizationStrategy = {
-                type: StrategyType.AMOUNT,
+                type: 'DUMMY',
                 processCall: jest.fn(),
                 getResult: jest.fn(() => ['totalSeconds', 100]),
                 reset: jest.fn(),
@@ -142,10 +159,10 @@ describe('TotalizationContext', () => {
         });
     });
 
-    describe('setUpProcessCalls', () => {
+    describe('initialize', () => {
         it('should reset strategies and totals', () => {
             const strategy1: TotalizationStrategy = {
-                type: StrategyType.AMOUNT,
+                type: 'DUMMY',
                 processCall: jest.fn(),
                 getResult: jest.fn(() => ['totalSeconds', 60]),
                 reset: jest.fn(),
@@ -153,7 +170,7 @@ describe('TotalizationContext', () => {
             context.registerStrategy(strategy1);
 
             context['totals'] = { totalSeconds: 100 };
-            context.setUpProcessCalls();
+            context.initialize();
 
             expect(strategy1.reset).toHaveBeenCalledTimes(1);
             expect(context.getTotals()).toEqual({});

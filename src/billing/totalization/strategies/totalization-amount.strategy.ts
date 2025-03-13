@@ -1,11 +1,10 @@
 import { TotalizationStrategy } from '../interfaces';
-import { StrategyType } from '../types';
-import { Call } from '../../../invoices/interfaces';
 import { TotalizationStrategyDecorator } from '../decorators/totalization-strategy.decorator';
+import { Call } from '../../../invoices/interfaces';
 
 @TotalizationStrategyDecorator()
 export class TotalizationAmountStrategy implements TotalizationStrategy {
-    readonly type = StrategyType.AMOUNT;
+    readonly type = 'AMOUNT';
     private total = 0;
 
     processCall(call: Call): void {

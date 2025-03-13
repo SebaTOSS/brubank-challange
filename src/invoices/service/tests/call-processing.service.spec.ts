@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CallProcessingService } from '../call-processing.service';
 import { BillingContext } from '../../../billing/billing-context';
 import { TotalizationContext } from '../../../billing/totalization/totalization-context';
+import { CallTypeContext } from '../../../billing/type-strategies/call-type.context';
 import { ParsedCallPayload, ProcessCallsResult } from '../../interfaces';
 
 describe('CallProcessingService', () => {
     let service: CallProcessingService;
     let billingContext: BillingContext;
     let totalizationContext: TotalizationContext;
+    let callTypeContext: CallTypeContext;
 
     beforeEach(async () => {
         const module: TestingModule = await Test.createTestingModule({
@@ -22,17 +24,25 @@ describe('CallProcessingService', () => {
                 {
                     provide: TotalizationContext,
                     useValue: {
-                        setUpProcessCalls: jest.fn(),
+                        initialize: jest.fn(),
                         processCall: jest.fn(),
                         getTotals: jest.fn(),
                     },
                 },
+                {
+                    provide: CallTypeContext,
+                    useValue: {
+                        initialize: jest.fn(),
+                        processCall: jest.fn(),
+                    },
+                }
             ],
         }).compile();
 
         service = module.get<CallProcessingService>(CallProcessingService);
         billingContext = module.get<BillingContext>(BillingContext);
         totalizationContext = module.get<TotalizationContext>(TotalizationContext);
+        callTypeContext = module.get<CallTypeContext>(CallTypeContext);
     });
 
     it('should process calls and return calls with totals', async () => {
@@ -67,6 +77,8 @@ describe('CallProcessingService', () => {
             return 0;
         });
 
+        jest.spyOn(callTypeContext, 'processCall').mockImplementation(() => ({ }));
+
         jest.spyOn(totalizationContext, 'processCall').mockImplementation(() => { });
         jest.spyOn(totalizationContext, 'getTotals').mockReturnValue({
             total: 90,
@@ -87,18 +99,28 @@ describe('CallProcessingService', () => {
             duration: 60,
             timestamp: '2025-01-15T10:00:00Z',
             amount: 0,
-            isFriend: true,
-            isNational: true,
-            isInternational: false,
+            metadata: {
+                user: {
+                    address: "Avenida siempre viva",
+                    friends: ["+54911111111"],
+                    name: "Juan Sanchez",
+                    phoneNumber: "+5491167910920",
+                },
+           },
         });
         expect(intlCall).toEqual({
             destination: '+191167980952',
             duration: 120,
             timestamp: '2025-01-20T10:00:00Z',
-            amount: 90, // 120 * 0.75
-            isFriend: false,
-            isNational: false,
-            isInternational: true,
+            amount: 90,
+            metadata: {
+                user: {
+                    address: "Avenida siempre viva",
+                    friends: ["+54911111111"],
+                    name: "Juan Sanchez",
+                    phoneNumber: "+5491167910920",
+                },
+            },
         });
 
         expect(result.totals).toEqual({

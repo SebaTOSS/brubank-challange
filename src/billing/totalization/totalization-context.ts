@@ -1,9 +1,8 @@
 import { ModuleRef } from "@nestjs/core";
 import { Injectable, OnModuleInit } from "@nestjs/common";
-import { StrategyType } from "./types";
 import { TotalizationStrategy } from "./interfaces";
-import { Call } from "../../invoices/interfaces";
 import { TOTALIZATION_STRATEGY_METADATA } from "./decorators/totalization-strategy.decorator";
+import { Call } from "../../invoices/interfaces";
 
 @Injectable()
 export class TotalizationContext implements OnModuleInit {
@@ -33,7 +32,7 @@ export class TotalizationContext implements OnModuleInit {
     }
 
     processCalls(calls: Call[]): void {
-        this.setUpProcessCalls();
+        this.initialize();
         calls.forEach(call => this.processCall(call));
     }
 
@@ -45,7 +44,7 @@ export class TotalizationContext implements OnModuleInit {
         });
     }
 
-    setUpProcessCalls() {
+    initialize() {
         this.resetStrategies();
         this.resetTotals();
     }

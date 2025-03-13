@@ -4,14 +4,19 @@ export interface CsvRow {
     [key: string]: string;
 }
 
+export interface ParsedRow {
+    origin: string;
+    destination: string;
+    timestamp: string;
+    duration: number;
+}
+
 export interface Call {
     destination: string;
     duration: number;
     timestamp: string;
     amount: number;
-    isFriend: boolean;
-    isNational: boolean
-    isInternational: boolean;
+    metadata?: Record<string, any>;
 }
 
 export interface ProcessCallsResult {
@@ -63,6 +68,6 @@ export interface ParseRowParams {
 
 export interface BillingContextMetadata {
     user: UserDto;
-    callCount: number;
+    callCount?: number;
     timestamp?: string;
 }

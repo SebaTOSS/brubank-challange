@@ -1,15 +1,14 @@
 import { TotalizationStrategy } from '../interfaces';
-import { StrategyType } from '../types';
-import { Call } from '../../../invoices/interfaces';
 import { TotalizationStrategyDecorator } from '../decorators/totalization-strategy.decorator';
+import { Call } from '../../../invoices/interfaces';
 
 @TotalizationStrategyDecorator()
 export class NationalTotalStrategy implements TotalizationStrategy {
-    readonly type = StrategyType.NATIONAL;
+    public readonly type = 'NATIONAL';
     private total = 0;
 
     processCall(call: Call): void {
-        if (call.isNational) {
+        if (call.metadata?.isNational) {
             this.total += call.duration;
         }
     }
